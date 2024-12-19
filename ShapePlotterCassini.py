@@ -22,12 +22,17 @@ def calculate_legendre_sum(x, alpha_params):
     return result
 
 
-def calculate_radius(theta, alpha_params, number_of_nucleons):
-    """Calculate the nuclear radius as a function of polar angle theta using Cassini parametrization."""
+def calculate_base_radius(theta, alpha_params, number_of_nucleons):
+    """Calculate the base nuclear radius without volume fixing."""
     cos_theta = np.cos(theta)
     deformation_term = 1 + calculate_legendre_sum(cos_theta, alpha_params)
     base_radius = r0 * number_of_nucleons ** (1 / 3)
     return base_radius * deformation_term
+
+def calculate_radius(theta, alpha_params, number_of_nucleons, volume_fix):
+    """Calculate the nuclear radius with volume fixing applied."""
+    base_r = calculate_base_radius(theta, alpha_params, number_of_nucleons)
+    return base_r * volume_fix**(1/3)
 
 
 def calculate_volume(number_of_nucleons, alpha_params):
@@ -37,7 +42,7 @@ def calculate_volume(number_of_nucleons, alpha_params):
     phi = np.linspace(0, 2 * np.pi, n_phi)
     theta_mesh, phi_mesh = np.meshgrid(theta, phi)
 
-    r = calculate_radius(theta_mesh, alpha_params, number_of_nucleons)
+    r = calculate_base_radius(theta_mesh, alpha_params, number_of_nucleons)
     integrand = (r ** 3 * np.sin(theta_mesh)) / 3
 
     return integrate.trapezoid(integrate.trapezoid(integrand, theta, axis=1), phi)
@@ -240,7 +245,7 @@ def main():
         volume_fix = calculate_volume_fixing_factor(number_of_nucleons, params)
 
         # Calculate new shape with volume conservation
-        plot_radius = calculate_radius(theta, params, number_of_nucleons) * volume_fix
+        plot_radius = calculate_radius(theta, params, number_of_nucleons, volume_fix)
         plot_x = plot_radius * np.cos(theta)
         plot_y = plot_radius * np.sin(theta)
         line.set_data(plot_x, plot_y)
@@ -307,8 +312,8 @@ def main():
         # Calculate dimensions
         max_x_length = np.max(plot_y) - np.min(plot_y)
         max_y_length = np.max(plot_x) - np.min(plot_x)
-        along_x_length = calculate_radius(0.0, params, number_of_nucleons) * volume_fix + calculate_radius(np.pi, params, number_of_nucleons) * volume_fix
-        along_y_length = calculate_radius(np.pi / 2, params, number_of_nucleons) * volume_fix + calculate_radius(-np.pi / 2, params, number_of_nucleons) * volume_fix
+        along_x_length = calculate_radius(0.0, params, number_of_nucleons, volume_fix) + calculate_radius(np.pi, params, number_of_nucleons, volume_fix)
+        along_y_length = calculate_radius(np.pi / 2, params, number_of_nucleons, volume_fix) + calculate_radius(-np.pi / 2, params, number_of_nucleons, volume_fix)
 
         # Calculate volumes
         sphere_volume = calculate_sphere_volume(number_of_nucleons)
