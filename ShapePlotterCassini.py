@@ -29,10 +29,11 @@ def calculate_base_radius(theta, alpha_params, number_of_nucleons):
     base_radius = r0 * number_of_nucleons ** (1 / 3)
     return base_radius * deformation_term
 
+
 def calculate_radius(theta, alpha_params, number_of_nucleons, volume_fix):
     """Calculate the nuclear radius with volume fixing applied."""
     base_r = calculate_base_radius(theta, alpha_params, number_of_nucleons)
-    return base_r * volume_fix**(1/3)
+    return base_r * volume_fix ** (1 / 3)
 
 
 def calculate_volume(number_of_nucleons, alpha_params):
@@ -98,8 +99,10 @@ def main():
     initial_n = 154
     theta = np.linspace(0, 2 * np.pi, 2000)
 
+    initial_volume_fix = calculate_volume_fixing_factor(initial_z + initial_n, initial_params)
+
     # Calculate and plot initial shape
-    radius = calculate_radius(theta, initial_params, initial_z + initial_n)
+    radius = calculate_radius(theta, initial_params, initial_z + initial_n, initial_volume_fix)
     x = radius * np.sin(theta)
     y = radius * np.cos(theta)
     line, = ax_plot.plot(x, y)
