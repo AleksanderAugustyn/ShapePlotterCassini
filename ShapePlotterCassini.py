@@ -58,7 +58,11 @@ def calculate_volume_fixing_factor(number_of_nucleons, alpha_params):
     """Calculate the volume fixing factor to conserve volume."""
     initial_volume = calculate_volume(number_of_nucleons, alpha_params)
     sphere_volume = calculate_sphere_volume(number_of_nucleons)
-    return (sphere_volume / initial_volume) ** (1 / 3)
+
+    print(f"Initial Volume: {initial_volume:.4f} fm³")
+    print(f"Sphere Volume: {sphere_volume:.4f} fm³")
+
+    return sphere_volume / initial_volume
 
 
 def find_neck_thickness(x_coords, y_coords, theta_vals, degree_range):
@@ -86,11 +90,11 @@ def main():
     plt.subplots_adjust(left=0.1, bottom=0.48, right=0.9, top=0.98)
 
     # Add text for keyboard input instructions
-    ax_text.text(0.1, 0.35, 'Keyboard Input Format (works with Ctrl+V):\nZ N α1 α2 α3 α4 α5 α6\nExample: 102 154 0.0 0.5 0.0 0.0 0.0 0.0',
+    ax_text.text(0.1, 0.30, 'Keyboard Input Format (works with Ctrl+V):\nZ N α1 α2 α3 α4 α5 α6\nExample: 102 154 0.0 0.5 0.0 0.0 0.0 0.0',
                  fontsize=12, verticalalignment='top')
 
     # Add error message text (initially empty)
-    error_text = ax_text.text(0.1, 0.20, '', color='red', fontsize=12, verticalalignment='top')
+    error_text = ax_text.text(0.1, 0.15, '', color='red', fontsize=12, verticalalignment='top')
 
     # Initial parameters
     num_params = 6  # Number of alpha parameters
@@ -115,7 +119,7 @@ def main():
     ax_plot.set_ylabel('Y (fm)', fontsize=18)
 
     # Create a text box for volume information
-    volume_text = ax_text.text(0.1, 0.4, '', fontsize=24)
+    volume_text = ax_text.text(0.1, 0.30, '', fontsize=24)
 
     # Create sliders for protons and neutrons
     ax_z = plt.axes((0.25, 0.00, 0.5, 0.02))
@@ -179,17 +183,17 @@ def main():
     reset_button = Button(ax=ax_reset, label='Reset')
 
     # Create text input field and submit button
-    ax_input = plt.axes((0.25, 0.42, 0.5, 0.02))
+    ax_input = plt.axes((0.25, 0.24, 0.5, 0.02))
     text_box = TextBox(ax_input, 'Parameters')
     text_box.label.set_fontsize(12)
 
-    ax_submit = plt.axes((0.80, 0.42, 0.1, 0.02))
+    ax_submit = plt.axes((0.80, 0.24, 0.1, 0.02))
     submit_button = Button(ax_submit, 'Submit')
 
     def reset_values(_):
         """Reset all sliders to their initial values."""
-        for slider in sliders:
-            slider.set_val(0.0)
+        for slider_counter in sliders:
+            slider_counter.set_val(0.0)
         slider_z.set_val(initial_z)
         slider_n.set_val(initial_n)
         text_box.set_val('')
@@ -207,10 +211,10 @@ def main():
             slider_z.set_val(int(values[0]))
             slider_n.set_val(int(values[1]))
 
-            for i, slider in enumerate(sliders):
-                if not (-1.0 <= values[i + 2] <= 1.0):
-                    raise ValueError(f"α{i + 1} must be between -1.0 and 1.0")
-                slider.set_val(values[i + 2])
+            for alfa_parameter, slider_counter in enumerate(sliders):
+                if not (-1.0 <= values[alfa_parameter + 2] <= 1.0):
+                    raise ValueError(f"α{alfa_parameter + 1} must be between -1.0 and 1.0")
+                slider_counter.set_val(values[alfa_parameter + 2])
 
             text_box.set_val('')
             error_text.set_text('')
@@ -336,6 +340,7 @@ def main():
             f'Sphere Volume: {sphere_volume:.4f} fm³\n'
             f'Shape Volume: {shape_volume:.4f} fm³\n'
             f'Volume Fixing Factor: {volume_fix:.8f}\n'
+            f'Radius Fixing Factor: {volume_fix ** (1 / 3):.8f}\n'
             f'Fixed Volume: {fixed_volume:.4f} fm³\n'
             f'Volume Conservation: {"✓" if volume_conserved else "✗"}\n'
             f'Max X Length: {max_x_length:.2f} fm\n'
