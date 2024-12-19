@@ -327,11 +327,17 @@ def main():
         if np.any(plot_radius < 0):
             negative_radius = True
 
+        # Check volume conservation
+        fixed_volume = shape_volume * volume_fix
+        volume_conserved = abs(fixed_volume - sphere_volume) <= 1
+        
         # Update information display
         volume_text.set_text(
             f'Sphere Volume: {sphere_volume:.4f} fm³\n'
             f'Shape Volume: {shape_volume:.4f} fm³\n'
             f'Volume Fixing Factor: {volume_fix:.8f}\n'
+            f'Fixed Volume: {fixed_volume:.4f} fm³\n'
+            f'Volume Conservation: {"✓" if volume_conserved else "✗"}\n'
             f'Max X Length: {max_x_length:.2f} fm\n'
             f'Max Y Length: {max_y_length:.2f} fm\n'
             f'Length Along X Axis (red): {along_x_length:.2f} fm\n'
