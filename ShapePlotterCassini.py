@@ -26,46 +26,53 @@ def cassini_coordinates(R, x, alpha, alpha_params):
     # Create dictionary of non-zero alpha parameters
     alpha_dict = {i + 1: val for i, val in enumerate(alpha_params)}
 
-    # print(alpha_dict)
-
     # Calculate first sum term
     sum_all = sum(alpha_dict.values())
-
-    # print(sum_all)
 
     # Calculate second sum term (with alternating signs)
     sum_alternating = sum((-1) ** n * val for n, val in alpha_dict.items())
 
     # Calculate third sum term (for the factorial part)
-
-    n = 1
-    print(alpha_dict.get(2 * n, 0))
-
-    exit()
-
-    # Only use even-indexed alphas (α₂ₙ) in the factorial sum
+    # For nth term in sum, use α₂ₙ
+    # e.g., n=1: use α₂, n=2: use α₄, n=3: use α₆, etc., if available, otherwise use 0
     sum_factorial = sum((-1) ** n * alpha_dict.get(2 * n, 0) * double_factorial(2 * n - 1) / (2 ** n * math.factorial(n))
-                        for n in range(1, len(alpha_params) // 2 + 1))
+                        for n in range(1, (max(alpha_dict.keys()) + 1) // 2 + 1))
 
     # Calculate epsilon using the formula from equation (6)
-    eps = (alpha - 1) / 4 * ((1 + sum_all) ** 2 + (1 + sum_alternating) ** 2) + \
-          (alpha + 1) / 2 * (1 + sum_factorial) ** 2
+    eps = (alpha - 1) / 4 * ((1 + sum_all) ** 2 + (1 + sum_alternating) ** 2) + (alpha + 1) / 2 * (1 + sum_factorial) ** 2
+
+    R_0 = 1.16 * 236 ** (1 / 3)  # Base radius
 
     # Calculate s parameter
-    s = eps * R ** 2
+    s = eps * R_0 ** 2
 
     # Calculate p(x) according to equation (3)
     p2 = R ** 4 + 2 * s * R ** 2 * (2 * x ** 2 - 1) + s ** 2
     p = np.sqrt(p2)
 
     # Calculate rho and z according to equations (3)
-    rho = 1 / np.sqrt(2) * np.sqrt(p - R ** 2 * (2 * x ** 2 - 1) - s)
-    z = np.sign(x) / np.sqrt(2) * np.sqrt(p + R ** 2 * (2 * x ** 2 - 1) + s)
+
+    under_sqrt_rho = p - R ** 2 * (2 * x ** 2 - 1) - s
+    if under_sqrt_rho <= abs(1e-10):
+        under_sqrt_rho = 0
+
+    under_sqrt_z = p + R ** 2 * (2 * x ** 2 - 1) + s
+    if under_sqrt_z <= abs(1e-10):
+        under_sqrt_z = 0
+
+    # if p - R ** 2 * (2 * x ** 2 - 1) - s < 0:
+    #     print("Warning: p - R ** 2 * (2 * x ** 2 - 1) - s < 0")
+    #     print(f"alpha: {alpha}, alpha_params: {alpha_params}")
+    #     print(f"p: {p}, R: {R}, x: {x}, s: {s}")
+    #     print(f"p - R ** 2 * (2 * x ** 2 - 1) - s: {p - R ** 2 * (2 * x ** 2 - 1) - s}")
+
+    rho = 1 / np.sqrt(2) * np.sqrt(under_sqrt_rho)
+    z = np.sign(x) / np.sqrt(2) * np.sqrt(under_sqrt_z)
 
     return rho, z
 
 
-def generate_nuclear_shape(alpha, alpha_params, n_points=1000):
+def generate_nuclear_shape(alpha, alpha_params, n_points=2000):
     """
     Generate points for nuclear shape using Cassini parametrization.
 
@@ -75,15 +82,18 @@ def generate_nuclear_shape(alpha, alpha_params, n_points=1000):
     n_points: Number of points for shape discretization
     """
     x = np.linspace(-1, 1, n_points)
-    R0 = 1.0  # Base radius
+    R_0 = 1.16 * 236 ** (1 / 3)  # Base radius
 
     # Calculate Legendre polynomials for each alpha parameter using numpy
-    R = np.ones_like(x) * R0
+    R = np.zeros_like(x)
+    legendre_sum = np.zeros_like(x)
     for n, alpha_n in enumerate(alpha_params, start=1):
         if alpha_n != 0:
             # Add contribution of each non-zero alpha parameter using Legendre polynomial
             legendre = np.polynomial.legendre.Legendre.basis(n)
-            R += R0 * alpha_n * legendre(x)
+            legendre_sum += alpha_n * legendre(x)
+
+    R = R_0 * (1 + legendre_sum)
 
     rho_points = []
     z_points = []
@@ -113,7 +123,7 @@ def plot_nuclear_shapes():
     axs[0, 0].set_aspect('equal')
 
     # First saddle point
-    alpha_params2 = np.array([0.000, 0.000, 0.000, 0.075])
+    alpha_params2 = np.array([0.000, 0.000, 0.000, -0.075])
     rho2, z2 = generate_nuclear_shape(0.350, alpha_params2)
     axs[0, 1].plot(z2, rho2, 'r-', label='Nuclear Surface')
     axs[0, 1].plot(z2, -rho2, 'r-')
