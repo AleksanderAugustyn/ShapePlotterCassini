@@ -13,6 +13,44 @@ def double_factorial(n):
     return math.prod(range(n, 0, -2))
 
 
+def calculate_zcm(alpha, alpha_params, n_points=1000):
+    """
+    Calculate the z-coordinate of the center of mass for proper alignment,
+    assuming constant nuclear density.
+
+    The mass element dM is proportional to the volume element dV = πρ²dz
+    for axially symmetric shapes with constant density.
+    """
+    x = np.linspace(-1, 1, n_points)
+    dx = x[1] - x[0]  # Step size for numerical integration
+
+    R_0 = 1.16 * 236 ** (1 / 3)  # Base radius
+
+    volume_elements = []
+    z_coords = []
+
+    for xi in x:
+        # Calculate R(x) using Legendre polynomials
+        R = R_0 * (1 + sum(alpha_n * np.polynomial.legendre.Legendre.basis(n + 1)(xi)
+                           for n, alpha_n in enumerate(alpha_params)))
+
+        # Calculate base coordinates
+        rho_i, z_i = cassini_coordinates(R, xi, alpha, alpha_params)
+
+        # Volume element dV = πρ²dz for constant density
+        # Note: we can ignore π since it cancels out in the ratio
+        dv = rho_i * rho_i * dx
+
+        volume_elements.append(dv)
+        z_coords.append(z_i)
+
+    # Calculate center of mass
+    total_volume = np.sum(volume_elements)
+    z_cm = np.sum(np.array(volume_elements) * np.array(z_coords)) / total_volume
+
+    return z_cm
+
+
 def cassini_coordinates(R, x, alpha, alpha_params):
     """
     Calculate cylindrical coordinates using Cassini oval parametrization.
@@ -83,6 +121,9 @@ def generate_nuclear_shape(alpha, alpha_params, n_points=2000):
     """
     x = np.linspace(-1, 1, n_points)
     R_0 = 1.16 * 236 ** (1 / 3)  # Base radius
+    c = 1.0  # For now, set scaling factor to 1
+
+    z_cm = calculate_zcm(alpha, alpha_params, n_points)
 
     # Calculate Legendre polynomials for each alpha parameter using numpy
     R = np.zeros_like(x)
@@ -99,7 +140,10 @@ def generate_nuclear_shape(alpha, alpha_params, n_points=2000):
     z_points = []
 
     for i in range(len(x)):
-        rho, z = cassini_coordinates(R[i], x[i], alpha, alpha_params)
+        rho_bar, z_bar = cassini_coordinates(R[i], x[i], alpha, alpha_params)
+        # Apply equation (5) transformation
+        rho = rho_bar / c
+        z = (z_bar - z_cm) / c
         rho_points.append(rho)
         z_points.append(z)
 
@@ -114,8 +158,8 @@ def plot_nuclear_shapes():
     fig.suptitle('Nuclear Shapes in Fission Process (236U)', fontsize=14)
 
     # Create reference sphere points
-    R_0 = 1.16 * 236 ** (1/3)
-    theta = np.linspace(0, 2*np.pi, 100)
+    R_0 = 1.16 * 236 ** (1 / 3)
+    theta = np.linspace(0, 2 * np.pi, 100)
     sphere_z = R_0 * np.cos(theta)
     sphere_rho = R_0 * np.sin(theta)
 
