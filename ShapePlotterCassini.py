@@ -113,12 +113,19 @@ def plot_nuclear_shapes():
     fig, axs = plt.subplots(2, 2, figsize=(12, 12))
     fig.suptitle('Nuclear Shapes in Fission Process (236U)', fontsize=14)
 
+    # Create reference sphere points
+    R_0 = 1.16 * 236 ** (1/3)
+    theta = np.linspace(0, 2*np.pi, 100)
+    sphere_z = R_0 * np.cos(theta)
+    sphere_rho = R_0 * np.sin(theta)
+
     # Ground state configuration
     # [α₁, α₂, α₃, α₄] - using 0 for α₂ as it's not used in the paper
     alpha_params1 = np.array([0.000, 0.000, 0.000, 0.075])
     rho1, z1 = generate_nuclear_shape(0.250, alpha_params1)
     axs[0, 0].plot(z1, rho1, 'b-', label='Nuclear Surface')
     axs[0, 0].plot(z1, -rho1, 'b-')
+    axs[0, 0].plot(sphere_z, sphere_rho, 'k--', alpha=0.5, label='Sphere R₀')
     axs[0, 0].set_title('Ground State')
     axs[0, 0].set_aspect('equal')
 
@@ -127,6 +134,7 @@ def plot_nuclear_shapes():
     rho2, z2 = generate_nuclear_shape(0.350, alpha_params2)
     axs[0, 1].plot(z2, rho2, 'r-', label='Nuclear Surface')
     axs[0, 1].plot(z2, -rho2, 'r-')
+    axs[0, 1].plot(sphere_z, sphere_rho, 'k--', alpha=0.5, label='Sphere R₀')
     axs[0, 1].set_title('First Saddle Point')
     axs[0, 1].set_aspect('equal')
 
@@ -135,6 +143,7 @@ def plot_nuclear_shapes():
     rho3, z3 = generate_nuclear_shape(0.525, alpha_params3)
     axs[1, 0].plot(z3, rho3, 'g-', label='Nuclear Surface')
     axs[1, 0].plot(z3, -rho3, 'g-')
+    axs[1, 0].plot(sphere_z, sphere_rho, 'k--', alpha=0.5, label='Sphere R₀')
     axs[1, 0].set_title('Secondary Minimum')
     axs[1, 0].set_aspect('equal')
 
@@ -143,6 +152,7 @@ def plot_nuclear_shapes():
     rho4, z4 = generate_nuclear_shape(0.650, alpha_params4)
     axs[1, 1].plot(z4, rho4, 'm-', label='Nuclear Surface')
     axs[1, 1].plot(z4, -rho4, 'm-')
+    axs[1, 1].plot(sphere_z, sphere_rho, 'k--', alpha=0.5, label='Sphere R₀')
     axs[1, 1].set_title('Second Saddle Point')
     axs[1, 1].set_aspect('equal')
 
@@ -151,6 +161,7 @@ def plot_nuclear_shapes():
         ax.grid(True)
         ax.set_xlabel('z/R₀')
         ax.set_ylabel('ρ/R₀')
+        ax.legend()
 
     plt.tight_layout()
     plt.show()
