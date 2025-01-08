@@ -241,10 +241,10 @@ class CassiniShapePlotter:
             slider.valtext.set_fontsize(12)
 
         # Create buttons
-        ax_reset = plt.axes((0.8, 0.15, 0.1, 0.04))
+        ax_reset = plt.axes((0.8, 0.25, 0.1, 0.04))
         self.reset_button = Button(ax=ax_reset, label='Reset')
 
-        ax_save = plt.axes((0.8, 0.1, 0.1, 0.04))
+        ax_save = plt.axes((0.8, 0.2, 0.1, 0.04))
         self.save_button = Button(ax=ax_save, label='Save Plot')
 
     def setup_event_handlers(self):
