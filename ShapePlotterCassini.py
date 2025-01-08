@@ -96,11 +96,16 @@ class CassiniShapeCalculator:
 
         return rho, z
 
-    def calculate_zcm(self, n_points: int = 1000) -> float:
-        """Calculate the z-coordinate of the center of mass."""
-        x = np.linspace(-1, 1, n_points)
-        rho, z = self.calculate_coordinates(x)
-
+    def calculate_zcm(self, rho: np.ndarray, z: np.ndarray) -> float:
+        """Calculate the z-coordinate of the center of mass for given shape coordinates.
+        
+        Args:
+            rho: Array of radial coordinates
+            z: Array of vertical coordinates
+            
+        Returns:
+            float: Z-coordinate of the center of mass
+        """
         # Calculate differential elements
         dz = np.diff(z)
         rho_midpoints = (rho[1:] + rho[:-1]) / 2
@@ -210,7 +215,7 @@ class CassiniShapePlotter:
         volume_fixing_factor = calculator.calculate_sphere_volume() / calculator.integrate_volume(rho_bar, z_bar)
 
         # Calculate center of mass
-        z_cm_bar = calculator.calculate_zcm()
+        z_cm_bar = calculator.calculate_zcm(rho_bar, z_bar)
 
         # Transform rho_bar and z_bar to rho and z
         rho = rho_bar / volume_fixing_factor  # Scale the shape
@@ -416,7 +421,7 @@ class CassiniShapePlotter:
         volume_post_scale = calculator.integrate_volume(rho, z)
 
         # Recalculate center of mass
-        z_cm = calculator.calculate_zcm()
+        z_cm = calculator.calculate_zcm(rho, z)
 
         # Update plot
         self.line.set_data(z, rho)
