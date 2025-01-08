@@ -407,14 +407,14 @@ class CassiniShapePlotter:
 
         # Add volume and center of mass information
         info_text = (
-            f"Sphere volume: {sphere_volume:.2f} fm³\n"
-            f"Shape volume (before scaling): {volume_pre_scale:.2f} fm³\n"
+            f"Sphere volume: {sphere_volume:.4f} fm³\n"
+            f"Shape volume (before scaling): {volume_pre_scale:.4f} fm³\n"
             f"Volume fixing factor: {volume_fixing_factor:.4f}\n"
             f"Radius scaling factor: {radius_scaling_factor:.4f}\n"
             f"c_male: {c_male:.4f}\n"
             f"Shape volume (after scaling): {volume_post_scale:.2f} fm³\n"
             f"Volume difference: {abs(sphere_volume - volume_post_scale):.2f} fm³\n"
-            f"Z center of mass: {z_cm:.4f} fm"
+            f"Z center of mass: {z_cm:.2f} fm"
         )
 
         # Remove old text if it exists
@@ -423,11 +423,11 @@ class CassiniShapePlotter:
 
         # Add new text
         self.ax_plot.text(1.1 * max_val, 0.5 * max_val, info_text,
-                          fontsize=10, verticalalignment='center')
+                          fontsize=24, verticalalignment='center')
 
         # Update title with current nuclear information
         self.ax_plot.set_title(f'Nuclear Shape (Z={current_params.protons}, N={current_params.neutrons}, A={current_params.nucleons})',
-                               fontsize=14)
+                               fontsize=24)
 
         self.fig.canvas.draw_idle()
 
