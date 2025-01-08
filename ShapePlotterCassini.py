@@ -440,7 +440,13 @@ class CassiniShapePlotter:
         self.ax_plot.set_xlim(-max_val, max_val)
         self.ax_plot.set_ylim(-max_val, max_val)
 
-        # Add volume and center of mass information
+        # Calculate maximum dimensions
+        max_x = np.max(np.abs(z))  # Maximum in x-direction (z-coordinate)
+        max_y = np.max(np.abs(rho))  # Maximum in y-direction (rho-coordinate)
+        total_length = 2 * max_x  # Full length in x-direction
+        total_width = 2 * max_y   # Full width in y-direction
+
+        # Add volume, center of mass, and dimension information
         info_text = (
             f"Sphere volume: {sphere_volume:.4f} fm³\n"
             f"Shape volume (before scaling): {volume_pre_scale:.4f} fm³\n"
@@ -450,7 +456,9 @@ class CassiniShapePlotter:
             f"Shape volume (after scaling): {volume_post_scale:.4f} fm³\n"
             f"Volume difference: {abs(sphere_volume - volume_post_scale):.4f} fm³\n"
             f"Z_bar center of mass: {z_cm_bar:.4f} fm\n"
-            f"Z center of mass: {z_cm:.2f} fm"
+            f"Z center of mass: {z_cm:.2f} fm\n"
+            f"Total length (x): {total_length:.4f} fm\n"
+            f"Total width (y): {total_width:.4f} fm"
         )
 
         # Remove old text if it exists
