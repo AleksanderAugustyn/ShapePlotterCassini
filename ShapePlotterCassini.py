@@ -143,6 +143,8 @@ class CassiniShapePlotter:
         self.btn_n_increase = None
         self.btn_n_decrease = None
         self.slider_alpha = None
+        self.btn_alpha_decrease = None
+        self.btn_alpha_increase = None
         self.sliders = []
         self.buttons = []  # Will store alpha parameter +/- buttons
         self.reset_button = None
@@ -214,11 +216,16 @@ class CassiniShapePlotter:
         self.btn_n_decrease = Button(ax_n_decrease, '-')
         self.btn_n_increase = Button(ax_n_increase, '+')
 
-        # Create slider for main alpha parameter
+        # Create slider and buttons for main alpha parameter
         ax_alpha = plt.axes((0.25, first_slider_y + 0.04, 0.5, 0.02))
+        ax_alpha_decrease = plt.axes((0.16, first_slider_y + 0.04, 0.04, 0.02))
+        ax_alpha_increase = plt.axes((0.80, first_slider_y + 0.04, 0.04, 0.02))
+
         self.slider_alpha = Slider(ax=ax_alpha, label='α',
                                    valmin=0.0, valmax=1.05,
                                    valinit=self.initial_alpha, valstep=0.025)
+        self.btn_alpha_decrease = Button(ax_alpha_decrease, '-')
+        self.btn_alpha_increase = Button(ax_alpha_increase, '+')
 
         # Create sliders and buttons for alpha parameters with appropriate ranges
         param_ranges = [
@@ -269,6 +276,10 @@ class CassiniShapePlotter:
         self.btn_z_increase.on_clicked(self.create_button_handler(self.slider_z, 1))
         self.btn_n_decrease.on_clicked(self.create_button_handler(self.slider_n, -1))
         self.btn_n_increase.on_clicked(self.create_button_handler(self.slider_n, 1))
+
+        # Connect main alpha button handlers
+        self.btn_alpha_decrease.on_clicked(self.create_button_handler(self.slider_alpha, -1))
+        self.btn_alpha_increase.on_clicked(self.create_button_handler(self.slider_alpha, 1))
 
         # Connect alpha parameter button handlers
         for i, slider in enumerate(self.sliders):
