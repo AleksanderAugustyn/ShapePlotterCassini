@@ -216,6 +216,8 @@ class CassiniShapePlotter:
         self.slider_alpha = Slider(ax=ax_alpha, label='α',
                                    valmin=0.0, valmax=1.05,
                                    valinit=self.initial_alpha, valstep=0.025)
+        self.slider_alpha.label.set_fontsize(12)
+        self.slider_alpha.valtext.set_fontsize(12)
 
         # Create sliders for alpha parameters with appropriate ranges
         param_ranges = [
@@ -230,6 +232,8 @@ class CassiniShapePlotter:
             slider = Slider(ax=ax, label=label,
                             valmin=min_val, valmax=max_val,
                             valinit=self.initial_alphas[i], valstep=0.025)
+            slider.label.set_fontsize(12)
+            slider.valtext.set_fontsize(12)
             self.sliders.append(slider)
 
         # Create buttons
