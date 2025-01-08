@@ -115,18 +115,24 @@ class CassiniShapeCalculator:
 
         return z_cm
 
-    def calculate_volume(self, n_points: int = 2000) -> float:
-        """Calculate the volume of the nuclear shape using numerical integration."""
-        x = np.linspace(-1, 1, n_points)
-        rho, z = self.calculate_coordinates(x)
+    @staticmethod
+    def integrate_volume(rho: np.ndarray, z: np.ndarray) -> float:
+        """Calculate volume by numerically integrating the provided shape coordinates.
 
+        Args:
+            rho: Array of radial coordinates
+            z: Array of vertical coordinates
+
+        Returns:
+            float: Volume calculated by numerical integration
+        """
         # Calculate differential elements
         dz = np.diff(z)
         rho_midpoints = (rho[1:] + rho[:-1]) / 2
 
         # Volume element dV = πρ²dz
         volume_elements = np.pi * rho_midpoints * rho_midpoints * dz
-        total_volume = np.abs(np.sum(volume_elements))  # abs to handle any sign issues
+        total_volume = np.abs(np.sum(volume_elements))
 
         return total_volume
 
@@ -200,7 +206,7 @@ class CassiniShapePlotter:
         rho_bar, z_bar = calculator.calculate_coordinates(self.x_points)
 
         # Calculate volume fixing factor
-        volume_fixing_factor = calculator.calculate_sphere_volume() / calculator.calculate_volume()
+        volume_fixing_factor = calculator.calculate_sphere_volume() / calculator.integrate_volume(rho_bar, z_bar)
 
         # Calculate center of mass
         z_cm_bar = calculator.calculate_zcm()
@@ -359,30 +365,29 @@ class CassiniShapePlotter:
         calculator = CassiniShapeCalculator(current_params)
         rho_bar, z_bar = calculator.calculate_coordinates(self.x_points)
 
-        # Calculate volume fixing factor
+        # Calculate the volume of the shape before scaling, sphere volume and volume scaling factor
         sphere_volume = calculator.calculate_sphere_volume()
-        volume_pre_scale = calculator.calculate_volume()
+        volume_pre_scale = calculator.integrate_volume(rho_bar, z_bar)
         volume_fixing_factor = sphere_volume / volume_pre_scale
 
-        # print(f"Sphere volume: {calculator.calculate_sphere_volume()}")
-        # print(f"Volume: {calculator.calculate_volume()}")
-        # print(f"Volume fixing factor: {volume_fixing_factor}")
+        # Calculate the radius scaling factor
+        radius_scaling_factor = (volume_fixing_factor ** (1 / 3))
+
+        # Calculate c_male
+        c_male = 1 / radius_scaling_factor
 
         # Calculate center of mass
         z_cm_bar = calculator.calculate_zcm()
 
         # Transform rho_bar and z_bar to rho and z
-        rho = rho_bar / (volume_fixing_factor ** (1 / 3))  # Scale the shape
-        z = (z_bar - z_cm_bar) / (volume_fixing_factor ** (1 / 3))  # Center the shape
+        rho = rho_bar / c_male  # Scale the shape
+        z = (z_bar - z_cm_bar) / c_male  # Center the shape
 
-        # Recalculate z_cm for the new shape, should be close to 0
+        # Calculate post-scale volume using the same integration method
+        volume_post_scale = calculator.integrate_volume(rho, z)
+
+        # Recalculate center of mass
         z_cm = calculator.calculate_zcm()
-        # print(f"Center of mass: {z_cm}")
-
-        # Recalculate volume, should be close to sphere volume
-        volume_post_scale = calculator.calculate_volume()
-        # print(f"Volume: {volume}")
-        # print(f"Difference: {abs(volume - calculator.calculate_sphere_volume())}")
 
         # Update plot
         self.line.set_data(z, rho)
@@ -405,6 +410,8 @@ class CassiniShapePlotter:
             f"Sphere volume: {sphere_volume:.2f} fm³\n"
             f"Shape volume (before scaling): {volume_pre_scale:.2f} fm³\n"
             f"Volume fixing factor: {volume_fixing_factor:.4f}\n"
+            f"Radius scaling factor: {radius_scaling_factor:.4f}\n"
+            f"c_male: {c_male:.4f}\n"
             f"Shape volume (after scaling): {volume_post_scale:.2f} fm³\n"
             f"Volume difference: {abs(sphere_volume - volume_post_scale):.2f} fm³\n"
             f"Z center of mass: {z_cm:.4f} fm"
