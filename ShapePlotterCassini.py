@@ -144,7 +144,7 @@ class CassiniShapePlotter:
         self.btn_n_decrease = None
         self.slider_alpha = None
         self.sliders = []
-        self.buttons = []
+        self.buttons = []  # Will store alpha parameter +/- buttons
         self.reset_button = None
         self.save_button = None
 
@@ -220,7 +220,7 @@ class CassiniShapePlotter:
                                    valmin=0.0, valmax=1.05,
                                    valinit=self.initial_alpha, valstep=0.025)
 
-        # Create sliders for alpha parameters with appropriate ranges
+        # Create sliders and buttons for alpha parameters with appropriate ranges
         param_ranges = [
             ('α₁', -1.0, 1.0),
             ('α₂', -1.0, 1.0),
@@ -229,11 +229,19 @@ class CassiniShapePlotter:
         ]
 
         for i, (label, min_val, max_val) in enumerate(param_ranges):
+            # Create slider
             ax = plt.axes((0.25, first_slider_y + 0.06 + i * 0.02, 0.5, 0.02))
             slider = Slider(ax=ax, label=label,
                             valmin=min_val, valmax=max_val,
                             valinit=self.initial_alphas[i], valstep=0.025)
             self.sliders.append(slider)
+            
+            # Create decrease/increase buttons
+            ax_decrease = plt.axes((0.16, first_slider_y + 0.06 + i * 0.02, 0.04, 0.02))
+            ax_increase = plt.axes((0.80, first_slider_y + 0.06 + i * 0.02, 0.04, 0.02))
+            btn_decrease = Button(ax_decrease, '-')
+            btn_increase = Button(ax_increase, '+')
+            self.buttons.extend([btn_decrease, btn_increase])
 
         # Style font sizes for all sliders
         for slider in [self.slider_z, self.slider_n, self.slider_alpha] + self.sliders:
@@ -261,6 +269,11 @@ class CassiniShapePlotter:
         self.btn_z_increase.on_clicked(self.create_button_handler(self.slider_z, 1))
         self.btn_n_decrease.on_clicked(self.create_button_handler(self.slider_n, -1))
         self.btn_n_increase.on_clicked(self.create_button_handler(self.slider_n, 1))
+
+        # Connect alpha parameter button handlers
+        for i, slider in enumerate(self.sliders):
+            self.buttons[i*2].on_clicked(self.create_button_handler(slider, -1))     # Decrease button
+            self.buttons[i*2+1].on_clicked(self.create_button_handler(slider, 1))    # Increase button
 
         # Connect action buttons
         self.reset_button.on_clicked(self.reset_values)
