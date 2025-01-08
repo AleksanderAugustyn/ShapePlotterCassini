@@ -96,7 +96,8 @@ class CassiniShapeCalculator:
 
         return rho, z
 
-    def calculate_zcm(self, rho: np.ndarray, z: np.ndarray) -> float:
+    @staticmethod
+    def calculate_zcm(rho: np.ndarray, z: np.ndarray) -> float:
         """Calculate the z-coordinate of the center of mass for given shape coordinates.
         
         Args:
@@ -411,7 +412,7 @@ class CassiniShapePlotter:
         c_male = 1 / radius_scaling_factor
 
         # Calculate center of mass
-        z_cm_bar = calculator.calculate_zcm()
+        z_cm_bar = calculator.calculate_zcm(rho_bar, z_bar)
 
         # Transform rho_bar and z_bar to rho and z
         rho = rho_bar / c_male  # Scale the shape
