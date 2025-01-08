@@ -206,18 +206,11 @@ class CassiniShapePlotter:
         self.btn_n_decrease = Button(ax_n_decrease, '-')
         self.btn_n_increase = Button(ax_n_increase, '+')
 
-        # Style settings for Z and N controls
-        for slider in [self.slider_z, self.slider_n]:
-            slider.label.set_fontsize(12)
-            slider.valtext.set_fontsize(12)
-
         # Create slider for main alpha parameter
         ax_alpha = plt.axes((0.25, 0.04, 0.5, 0.02))
         self.slider_alpha = Slider(ax=ax_alpha, label='α',
                                    valmin=0.0, valmax=1.05,
                                    valinit=self.initial_alpha, valstep=0.025)
-        self.slider_alpha.label.set_fontsize(12)
-        self.slider_alpha.valtext.set_fontsize(12)
 
         # Create sliders for alpha parameters with appropriate ranges
         param_ranges = [
@@ -232,9 +225,12 @@ class CassiniShapePlotter:
             slider = Slider(ax=ax, label=label,
                             valmin=min_val, valmax=max_val,
                             valinit=self.initial_alphas[i], valstep=0.025)
+            self.sliders.append(slider)
+
+        # Style font sizes for all sliders
+        for slider in [self.slider_z, self.slider_n, self.slider_alpha] + self.sliders:
             slider.label.set_fontsize(12)
             slider.valtext.set_fontsize(12)
-            self.sliders.append(slider)
 
         # Create buttons
         ax_reset = plt.axes((0.8, 0.15, 0.1, 0.04))
