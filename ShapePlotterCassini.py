@@ -457,8 +457,8 @@ class CassiniShapePlotter:
             f"Volume difference: {abs(sphere_volume - volume_post_scale):.4f} fm³\n"
             f"Z_bar center of mass: {z_cm_bar:.4f} fm\n"
             f"Z center of mass: {z_cm:.2f} fm\n"
-            f"Total length (x): {total_length:.4f} fm\n"
-            f"Total width (y): {total_width:.4f} fm"
+            f"Max X length: {total_length:.4f} fm\n"
+            f"Max Y length: {total_width:.4f} fm"
         )
 
         # Remove old text if it exists
