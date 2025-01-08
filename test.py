@@ -1,18 +1,11 @@
 """
-Nuclear Shape Plotter using Cassini Ovals - A program to visualize and analyze nuclear shapes.
-This version implements an object-oriented design for better organization and maintainability.
+Nuclear Shapes in Fission Process (236U)
 """
 
 import math
-from dataclasses import dataclass, field
-from typing import List, Tuple
 
-import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.widgets import Button, Slider
-
-matplotlib.use('TkAgg')
 
 
 def double_factorial(n):
@@ -20,316 +13,203 @@ def double_factorial(n):
     return math.prod(range(n, 0, -2))
 
 
-@dataclass
-class CassiniParameters:
-    """Class to store Cassini shape parameters."""
-    protons: int
-    neutrons: int
-    alpha: float = 0.0
-    alpha_params: List[float] = field(default_factory=lambda: [0.0] * 5)  # Now includes α₂
-    r0: float = 1.16  # Radius constant in fm
+def calculate_zcm(alpha, alpha_params, n_points=1000):
+    """
+    Calculate the z-coordinate of the center of mass for proper alignment,
+    assuming constant nuclear density.
 
-    def __post_init__(self):
-        """Validate parameters after initialization."""
-        if not isinstance(self.alpha_params, list):
-            raise TypeError("alpha_params must be a list")
+    The mass element dM is proportional to the volume element dV = πρ²dz
+    for axially symmetric shapes with constant density.
+    """
+    x = np.linspace(-1, 1, n_points)
+    dx = x[1] - x[0]  # Step size for numerical integration
 
-        if len(self.alpha_params) != 5:  # Updated for 5 parameters
-            original_length = len(self.alpha_params)
-            if len(self.alpha_params) < 5:
-                self.alpha_params.extend([0.0] * (5 - len(self.alpha_params)))
-            else:
-                self.alpha_params = self.alpha_params[:5]
+    R_0 = 1.16 * 236 ** (1 / 3)  # Base radius
 
-    @property
-    def nucleons(self) -> int:
-        """Total number of nucleons."""
-        return self.protons + self.neutrons
+    volume_elements = []
+    z_coords = []
 
-
-class CassiniShapeCalculator:
-    """Class for performing Cassini shape calculations."""
-
-    def __init__(self, params: CassiniParameters):
-        self.params = params
-
-    def calculate_epsilon(self) -> float:
-        """Calculate epsilon parameter from alpha and alpha parameters."""
-        alpha = self.params.alpha
-        alpha_params = self.params.alpha_params
-
-        sum_all = sum(alpha_params)
-        sum_alternating = sum((-1) ** n * val for n, val in enumerate(alpha_params, 1))
-
-        # Calculate factorial sum term
-        sum_factorial = 0
-        for n in range(1, 3):  # For α₂ and α₄
-            idx = 2 * n - 1  # Convert to 0-based index
-            if idx < len(alpha_params):
-                val = alpha_params[idx]
-                sum_factorial += ((-1) ** n * val *
-                                  double_factorial(2 * n - 1) /
-                                  (2 ** n * math.factorial(n)))
-
-
-        print(f"sum_factorial: {sum_factorial}")
-
-        epsilon = ((alpha - 1) / 4 * ((1 + sum_all) ** 2 + (1 + sum_alternating) ** 2) +
-                   (alpha + 1) / 2 * (1 + sum_factorial) ** 2)
-
-        return epsilon
-
-    def calculate_coordinates(self, x: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
-        """Calculate cylindrical coordinates using Cassini oval parametrization."""
-        R_0 = self.params.r0 * (self.params.nucleons ** (1 / 3))
-        epsilon = self.calculate_epsilon()
-        s = epsilon * R_0 ** 2
-
+    for xi in x:
         # Calculate R(x) using Legendre polynomials
-        R = R_0 * (1 + sum(alpha_n * np.polynomial.legendre.Legendre.basis(n + 1)(x)
-                           for n, alpha_n in enumerate(self.params.alpha_params)))
+        R = R_0 * (1 + sum(alpha_n * np.polynomial.legendre.Legendre.basis(n + 1)(xi)
+                           for n, alpha_n in enumerate(alpha_params)))
 
-        # Calculate p(x)
-        p2 = R ** 4 + 2 * s * R ** 2 * (2 * x ** 2 - 1) + s ** 2
-        p = np.sqrt(p2)
-
-        # Calculate ρ and z
-        rho = np.sqrt(np.maximum(0, p - R ** 2 * (2 * x ** 2 - 1) - s)) / np.sqrt(2)
-        z = np.sign(x) * np.sqrt(np.maximum(0, p + R ** 2 * (2 * x ** 2 - 1) + s)) / np.sqrt(2)
-
-        return rho, z
-
-    def calculate_zcm(self, n_points: int = 1000) -> float:
-        """Calculate the z-coordinate of the center of mass."""
-        x = np.linspace(-1, 1, n_points)
-        rho, z = self.calculate_coordinates(x)
-
-        # Calculate differential elements
-        dz = np.diff(z)
-        rho_midpoints = (rho[1:] + rho[:-1]) / 2
-        z_midpoints = (z[1:] + z[:-1]) / 2
+        # Calculate base coordinates
+        rho_i, z_i = cassini_coordinates(R, xi, alpha, alpha_params)
 
         # Volume element dV = πρ²dz for constant density
-        volume_elements = rho_midpoints * rho_midpoints * dz
+        # Note: we can ignore π since it cancels out in the ratio
+        dv = rho_i * rho_i * dx
 
-        # Calculate center of mass
-        total_volume = np.sum(volume_elements)
-        z_cm = np.sum(volume_elements * z_midpoints) / total_volume
+        volume_elements.append(dv)
+        z_coords.append(z_i)
 
-        return z_cm
+    # Calculate center of mass
+    total_volume = np.sum(volume_elements)
+    z_cm = np.sum(np.array(volume_elements) * np.array(z_coords)) / total_volume
 
-
-class CassiniShapePlotter:
-    """Class for handling the plotting interface and user interaction."""
-
-    def __init__(self):
-        """Initialize the plotter with default settings."""
-        # Define all instance attributes
-        self.initial_z = 92  # Uranium
-        self.initial_n = 144
-        self.initial_alpha = 0.0
-        self.initial_alphas = [0.0, 0.0, 0.0, 0.0, 0.0]  # α₁, α₂, α₃, α₄
-        self.x_points = np.linspace(-1, 1, 2000)
-
-        # UI elements
-        self.fig = None
-        self.ax_plot = None
-        self.line = None
-        self.line_mirror = None
-        self.slider_z = None
-        self.slider_n = None
-        self.btn_z_increase = None
-        self.btn_z_decrease = None
-        self.btn_n_increase = None
-        self.btn_n_decrease = None
-        self.slider_alpha = None
-        self.sliders = []
-        self.buttons = []
-        self.reset_button = None
-        self.save_button = None
-
-        # Initialize nuclear parameters
-        self.nuclear_params = CassiniParameters(
-            protons=self.initial_z,
-            neutrons=self.initial_n,
-            alpha=self.initial_alpha,
-            alpha_params=self.initial_alphas
-        )
-
-        # Set up the interface
-        self.create_figure()
-        self.setup_controls()
-        self.setup_event_handlers()
-
-    def create_figure(self):
-        """Create and set up the matplotlib figure."""
-        self.fig = plt.figure(figsize=(12, 8))
-        self.ax_plot = self.fig.add_subplot(111)
-
-        plt.subplots_adjust(left=0.1, bottom=0.35, right=0.9, top=0.9)
-
-        # Set up the main plot
-        self.ax_plot.set_aspect('equal')
-        self.ax_plot.grid(True)
-        self.ax_plot.set_title('Nuclear Shape (Cassini Parametrization)', fontsize=14)
-        self.ax_plot.set_xlabel('X (fm)', fontsize=12)
-        self.ax_plot.set_ylabel('Y (fm)', fontsize=12)
-
-        # Initialize the shape plot
-        calculator = CassiniShapeCalculator(self.nuclear_params)
-        rho, z = calculator.calculate_coordinates(self.x_points)
-        z_cm = calculator.calculate_zcm()
-        z = (z - z_cm)  # Center the shape
-
-        self.line, = self.ax_plot.plot(z, rho)
-        self.line_mirror, = self.ax_plot.plot(z, -rho)
-
-    def setup_controls(self):
-        """Set up all UI controls."""
-        # Create proton (Z) controls
-        first_slider_y = 0.02
-        ax_z = plt.axes((0.25, first_slider_y, 0.5, 0.02))
-        ax_z_decrease = plt.axes((0.16, first_slider_y, 0.04, 0.02))
-        ax_z_increase = plt.axes((0.80, first_slider_y, 0.04, 0.02))
-
-        self.slider_z = Slider(ax=ax_z, label='Z', valmin=82, valmax=120,
-                               valinit=self.initial_z, valstep=1)
-        self.btn_z_decrease = Button(ax_z_decrease, '-')
-        self.btn_z_increase = Button(ax_z_increase, '+')
-
-        # Create neutron (N) controls
-        ax_n = plt.axes((0.25, first_slider_y + 0.02, 0.5, 0.02))
-        ax_n_decrease = plt.axes((0.16, 0.04, 0.04, 0.02))
-        ax_n_increase = plt.axes((0.80, 0.04, 0.04, 0.02))
-
-        self.slider_n = Slider(ax=ax_n, label='N', valmin=100, valmax=180,
-                               valinit=self.initial_n, valstep=1)
-        self.btn_n_decrease = Button(ax_n_decrease, '-')
-        self.btn_n_increase = Button(ax_n_increase, '+')
-
-        # Create slider for main alpha parameter
-        ax_alpha = plt.axes((0.25, first_slider_y + 0.04, 0.5, 0.02))
-        self.slider_alpha = Slider(ax=ax_alpha, label='α',
-                                   valmin=0.0, valmax=1.05,
-                                   valinit=self.initial_alpha, valstep=0.025)
-
-        # Create sliders for alpha parameters with appropriate ranges
-        param_ranges = [
-            ('α₁', -1.0, 1.0),
-            ('α₂', -1.0, 1.0),
-            ('α₃', -1.0, 1.0),
-            ('α₄', -1.0, 1.0)
-        ]
-
-        for i, (label, min_val, max_val) in enumerate(param_ranges):
-            ax = plt.axes((0.25, first_slider_y + 0.06 + i * 0.02, 0.5, 0.02))
-            slider = Slider(ax=ax, label=label,
-                            valmin=min_val, valmax=max_val,
-                            valinit=self.initial_alphas[i], valstep=0.025)
-            self.sliders.append(slider)
-
-        # Style font sizes for all sliders
-        for slider in [self.slider_z, self.slider_n, self.slider_alpha] + self.sliders:
-            slider.label.set_fontsize(12)
-            slider.valtext.set_fontsize(12)
-
-        # Create buttons
-        ax_reset = plt.axes((0.8, 0.15, 0.1, 0.04))
-        self.reset_button = Button(ax=ax_reset, label='Reset')
-
-        ax_save = plt.axes((0.8, 0.1, 0.1, 0.04))
-        self.save_button = Button(ax=ax_save, label='Save Plot')
-
-    def setup_event_handlers(self):
-        """Set up all event handlers for controls."""
-        # Connect slider update functions
-        self.slider_z.on_changed(self.update_plot)
-        self.slider_n.on_changed(self.update_plot)
-        self.slider_alpha.on_changed(self.update_plot)
-        for slider in self.sliders:
-            slider.on_changed(self.update_plot)
-
-        # Connect proton/neutron button handlers
-        self.btn_z_decrease.on_clicked(self.create_button_handler(self.slider_z, -1))
-        self.btn_z_increase.on_clicked(self.create_button_handler(self.slider_z, 1))
-        self.btn_n_decrease.on_clicked(self.create_button_handler(self.slider_n, -1))
-        self.btn_n_increase.on_clicked(self.create_button_handler(self.slider_n, 1))
-
-        # Connect action buttons
-        self.reset_button.on_clicked(self.reset_values)
-        self.save_button.on_clicked(self.save_plot)
-
-    @staticmethod
-    def create_button_handler(slider_obj: Slider, increment: int):
-        """Create a button click handler for a slider object."""
-
-        def handler(_):
-            """Handle button click event."""
-            new_val = slider_obj.val + increment * slider_obj.valstep
-            if slider_obj.valmin <= new_val <= slider_obj.valmax:
-                slider_obj.set_val(new_val)
-
-        return handler
-
-    def reset_values(self, _):
-        """Reset all sliders to their initial values."""
-        self.slider_z.set_val(self.initial_z)
-        self.slider_n.set_val(self.initial_n)
-        self.slider_alpha.set_val(self.initial_alpha)
-        for slider, init_val in zip(self.sliders, self.initial_alphas):
-            slider.set_val(init_val)
-
-    def save_plot(self, _):
-        """Save the current plot to a file."""
-        number_of_protons = int(self.slider_z.val)
-        number_of_neutrons = int(self.slider_n.val)
-        params = [self.slider_alpha.val] + [s.val for s in self.sliders]
-        filename = f"cassini_shape_{number_of_protons}_{number_of_neutrons}_{'_'.join(f'{p:.2f}' for p in params)}.png"
-        self.fig.savefig(filename)
-        print(f"Plot saved as {filename}")
-
-    def update_plot(self, _):
-        """Update the plot with new parameters."""
-        # Get current parameters
-        current_params = CassiniParameters(
-            protons=int(self.slider_z.val),
-            neutrons=int(self.slider_n.val),
-            alpha=self.slider_alpha.val,
-            alpha_params=[s.val for s in self.sliders]
-        )
-
-        # Calculate new shape
-        calculator = CassiniShapeCalculator(current_params)
-        rho, z = calculator.calculate_coordinates(self.x_points)
-        z_cm = calculator.calculate_zcm()
-        z = (z - z_cm)  # Center the shape
-
-        # Update plot
-        self.line.set_data(z, rho)
-        self.line_mirror.set_data(z, -rho)
-
-        # Update plot limits
-        max_val = max(np.max(np.abs(z)), np.max(np.abs(rho))) * 1.2
-        self.ax_plot.set_xlim(-max_val, max_val)
-        self.ax_plot.set_ylim(-max_val, max_val)
-
-        # Update title with current nuclear information
-        self.ax_plot.set_title(f'Nuclear Shape (Z={current_params.protons}, N={current_params.neutrons}, A={current_params.nucleons})',
-                               fontsize=14)
-
-        self.fig.canvas.draw_idle()
-
-    def run(self):
-        """Start the interactive plotting interface."""
-        self.update_plot(None)
-        plt.show(block=True)
+    return z_cm
 
 
-def main():
-    """Main entry point for the application."""
-    plotter = CassiniShapePlotter()
-    plotter.run()
+def cassini_coordinates(R, x, alpha, alpha_params):
+    """
+    Calculate cylindrical coordinates using Cassini oval parametrization.
+
+    Parameters:
+    R, x: Lemniscate coordinate system parameters
+    alpha: Main deformation parameter (0 to 1)
+    alpha_params: Array of alpha parameters where index+1 corresponds to the parameter number
+                 e.g., alpha_params[0] is α₁, alpha_params[2] is α₃, etc.
+    """
+    # Create dictionary of non-zero alpha parameters
+    alpha_dict = {i + 1: val for i, val in enumerate(alpha_params)}
+
+    # Calculate first sum term
+    sum_all = sum(alpha_dict.values())
+
+    # Calculate second sum term (with alternating signs)
+    sum_alternating = sum((-1) ** n * val for n, val in alpha_dict.items())
+
+    # Calculate third sum term (for the factorial part)
+    # For nth term in sum, use α₂ₙ
+    # e.g., n=1: use α₂, n=2: use α₄, n=3: use α₆, etc., if available, otherwise use 0
+    sum_factorial = sum((-1) ** n * alpha_dict.get(2 * n, 0) * double_factorial(2 * n - 1) / (2 ** n * math.factorial(n))
+                        for n in range(1, (max(alpha_dict.keys()) + 1) // 2 + 1))
+
+    # Calculate epsilon using the formula from equation (6)
+    eps = (alpha - 1) / 4 * ((1 + sum_all) ** 2 + (1 + sum_alternating) ** 2) + (alpha + 1) / 2 * (1 + sum_factorial) ** 2
+
+    R_0 = 1.16 * 236 ** (1 / 3)  # Base radius
+
+    # Calculate s parameter
+    s = eps * R_0 ** 2
+
+    # Calculate p(x) according to equation (3)
+    p2 = R ** 4 + 2 * s * R ** 2 * (2 * x ** 2 - 1) + s ** 2
+    p = np.sqrt(p2)
+
+    # Calculate rho and z according to equations (3)
+
+    under_sqrt_rho = p - R ** 2 * (2 * x ** 2 - 1) - s
+    if under_sqrt_rho <= abs(1e-10):
+        under_sqrt_rho = 0
+
+    under_sqrt_z = p + R ** 2 * (2 * x ** 2 - 1) + s
+    if under_sqrt_z <= abs(1e-10):
+        under_sqrt_z = 0
+
+    # if p - R ** 2 * (2 * x ** 2 - 1) - s < 0:
+    #     print("Warning: p - R ** 2 * (2 * x ** 2 - 1) - s < 0")
+    #     print(f"alpha: {alpha}, alpha_params: {alpha_params}")
+    #     print(f"p: {p}, R: {R}, x: {x}, s: {s}")
+    #     print(f"p - R ** 2 * (2 * x ** 2 - 1) - s: {p - R ** 2 * (2 * x ** 2 - 1) - s}")
+
+    rho = 1 / np.sqrt(2) * np.sqrt(under_sqrt_rho)
+    z = np.sign(x) / np.sqrt(2) * np.sqrt(under_sqrt_z)
+
+    return rho, z
 
 
-if __name__ == '__main__':
-    main()
+def generate_nuclear_shape(alpha, alpha_params, n_points=2000):
+    """
+    Generate points for nuclear shape using Cassini parametrization.
+
+    Parameters:
+    alpha: Main deformation parameter
+    alpha_params: Array of alpha parameters
+    n_points: Number of points for shape discretization
+    """
+    x = np.linspace(-1, 1, n_points)
+    R_0 = 1.16 * 236 ** (1 / 3)  # Base radius
+    c = 1.0  # For now, set scaling factor to 1
+
+    z_cm = calculate_zcm(alpha, alpha_params, n_points)
+
+    # Calculate Legendre polynomials for each alpha parameter using numpy
+    R = np.zeros_like(x)
+    legendre_sum = np.zeros_like(x)
+    for n, alpha_n in enumerate(alpha_params, start=1):
+        if alpha_n != 0:
+            # Add contribution of each non-zero alpha parameter using Legendre polynomial
+            legendre = np.polynomial.legendre.Legendre.basis(n)
+            legendre_sum += alpha_n * legendre(x)
+
+    R = R_0 * (1 + legendre_sum)
+
+    rho_points = []
+    z_points = []
+
+    for i in range(len(x)):
+        rho_bar, z_bar = cassini_coordinates(R[i], x[i], alpha, alpha_params)
+        # Apply equation (5) transformation
+        rho = rho_bar / c
+        z = (z_bar - z_cm) / c
+        rho_points.append(rho)
+        z_points.append(z)
+
+    return np.array(rho_points), np.array(z_points)
+
+
+def plot_nuclear_shapes():
+    """
+    Create plots for different nuclear configurations from the paper.
+    """
+    fig, axs = plt.subplots(2, 2, figsize=(12, 12))
+    fig.suptitle('Nuclear Shapes in Fission Process (236U)', fontsize=14)
+
+    # Create reference sphere points
+    R_0 = 1.16 * 236 ** (1 / 3)
+    theta = np.linspace(0, 2 * np.pi, 100)
+    sphere_z = R_0 * np.cos(theta)
+    sphere_rho = R_0 * np.sin(theta)
+
+    # Ground state configuration
+    # [α₁, α₂, α₃, α₄] - using 0 for α₂ as it's not used in the paper
+    alpha_params1 = np.array([0.000, 0.000, 0.000, 0.075])
+    rho1, z1 = generate_nuclear_shape(0.250, alpha_params1)
+    axs[0, 0].plot(z1, rho1, 'b-', label='Nuclear Surface')
+    axs[0, 0].plot(z1, -rho1, 'b-')
+    axs[0, 0].plot(sphere_z, sphere_rho, 'k--', alpha=0.5, label='Sphere R₀')
+    axs[0, 0].set_title('Ground State')
+    axs[0, 0].set_aspect('equal')
+
+    # First saddle point
+    alpha_params2 = np.array([0.000, 0.000, 0.000, -0.075])
+    rho2, z2 = generate_nuclear_shape(0.350, alpha_params2)
+    axs[0, 1].plot(z2, rho2, 'r-', label='Nuclear Surface')
+    axs[0, 1].plot(z2, -rho2, 'r-')
+    axs[0, 1].plot(sphere_z, sphere_rho, 'k--', alpha=0.5, label='Sphere R₀')
+    axs[0, 1].set_title('First Saddle Point')
+    axs[0, 1].set_aspect('equal')
+
+    # Secondary minimum
+    alpha_params3 = np.array([0.000, 0.000, 0.000, 0.025])
+    rho3, z3 = generate_nuclear_shape(0.525, alpha_params3)
+    axs[1, 0].plot(z3, rho3, 'g-', label='Nuclear Surface')
+    axs[1, 0].plot(z3, -rho3, 'g-')
+    axs[1, 0].plot(sphere_z, sphere_rho, 'k--', alpha=0.5, label='Sphere R₀')
+    axs[1, 0].set_title('Secondary Minimum')
+    axs[1, 0].set_aspect('equal')
+
+    # Second saddle point
+    alpha_params4 = np.array([0.200, 0.000, 0.025, 0.050])
+    rho4, z4 = generate_nuclear_shape(0.650, alpha_params4)
+    axs[1, 1].plot(z4, rho4, 'm-', label='Nuclear Surface')
+    axs[1, 1].plot(z4, -rho4, 'm-')
+    axs[1, 1].plot(sphere_z, sphere_rho, 'k--', alpha=0.5, label='Sphere R₀')
+    axs[1, 1].set_title('Second Saddle Point')
+    axs[1, 1].set_aspect('equal')
+
+    # Add grid and labels
+    for ax in axs.flat:
+        ax.grid(True)
+        ax.set_xlabel('z/R₀')
+        ax.set_ylabel('ρ/R₀')
+        ax.legend()
+
+    plt.tight_layout()
+    plt.show()
+
+
+if __name__ == "__main__":
+    plot_nuclear_shapes()
