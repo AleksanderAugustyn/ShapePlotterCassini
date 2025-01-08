@@ -135,6 +135,7 @@ class CassiniShapePlotter:
         self.ax_plot = None
         self.line = None
         self.line_mirror = None
+        self.sphere_line = None
         self.slider_z = None
         self.slider_n = None
         self.btn_z_increase = None
@@ -180,8 +181,15 @@ class CassiniShapePlotter:
         z_cm = calculator.calculate_zcm()
         z = (z - z_cm)  # Center the shape
 
+        # Create reference sphere
+        R_0 = self.nuclear_params.r0 * (self.nuclear_params.nucleons ** (1/3))
+        theta = np.linspace(0, 2*np.pi, 200)
+        sphere_x = R_0 * np.cos(theta)
+        sphere_y = R_0 * np.sin(theta)
+        
         self.line, = self.ax_plot.plot(z, rho)
         self.line_mirror, = self.ax_plot.plot(z, -rho)
+        self.sphere_line, = self.ax_plot.plot(sphere_x, sphere_y, '--', color='gray', alpha=0.5, label='R₀')
 
     def setup_controls(self):
         """Set up all UI controls."""
@@ -306,6 +314,13 @@ class CassiniShapePlotter:
         # Update plot
         self.line.set_data(z, rho)
         self.line_mirror.set_data(z, -rho)
+
+        # Update reference sphere
+        R_0 = current_params.r0 * (current_params.nucleons ** (1/3))
+        theta = np.linspace(0, 2*np.pi, 200)
+        sphere_x = R_0 * np.cos(theta)
+        sphere_y = R_0 * np.sin(theta)
+        self.sphere_line.set_data(sphere_x, sphere_y)
 
         # Update plot limits
         max_val = max(np.max(np.abs(z)), np.max(np.abs(rho))) * 1.2
