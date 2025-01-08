@@ -117,6 +117,26 @@ class CassiniShapeCalculator:
 
         return z_cm
 
+    def calculate_volume(self, n_points: int = 1000) -> float:
+        """Calculate the volume of the nuclear shape using numerical integration."""
+        x = np.linspace(-1, 1, n_points)
+        rho, z = self.calculate_coordinates(x)
+
+        # Calculate differential elements
+        dz = np.diff(z)
+        rho_midpoints = (rho[1:] + rho[:-1]) / 2
+
+        # Volume element dV = πρ²dz
+        volume_elements = np.pi * rho_midpoints * rho_midpoints * dz
+        total_volume = np.abs(np.sum(volume_elements))  # abs to handle any sign issues
+
+        return total_volume
+
+    def calculate_sphere_volume(self) -> float:
+        """Calculate the volume of a sphere with the same number of nucleons."""
+        R_0 = self.params.r0 * (self.params.nucleons ** (1/3))
+        return (4/3) * np.pi * R_0**3
+
 
 class CassiniShapePlotter:
     """Class for handling the plotting interface and user interaction."""
