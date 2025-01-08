@@ -296,7 +296,7 @@ class CassiniShapePlotter:
         self.save_button = Button(ax=ax_save, label='Save Plot')
 
         # Create configuration buttons on the left
-        config_labels = ['Config 1', 'Config 2', 'Config 3', 'Config 4']
+        config_labels = ['Spherical', 'Prolate', 'Oblate', 'Triaxial']
         for i, label in enumerate(config_labels):
             ax_config = plt.axes((0.02, 0.6 - i*0.1, 0.1, 0.04))
             btn = Button(ax=ax_config, label=label)
@@ -306,10 +306,10 @@ class CassiniShapePlotter:
         """Apply a predefined configuration."""
         # These are placeholder values - you can set your own configurations
         configs = {
-            0: {'Z': 92, 'N': 144, 'alpha': 0.0, 'params': [0.0, 0.0, 0.0, 0.0]},
-            1: {'Z': 92, 'N': 144, 'alpha': 0.0, 'params': [0.0, 0.0, 0.0, 0.0]},
-            2: {'Z': 92, 'N': 144, 'alpha': 0.0, 'params': [0.0, 0.0, 0.0, 0.0]},
-            3: {'Z': 92, 'N': 144, 'alpha': 0.0, 'params': [0.0, 0.0, 0.0, 0.0]}
+            0: {'Z': 92, 'N': 144, 'alpha': 0.0, 'params': [0.0, 0.0, 0.0, 0.0]},  # Spherical
+            1: {'Z': 92, 'N': 144, 'alpha': 0.4, 'params': [0.0, 0.3, 0.0, 0.0]},  # Prolate
+            2: {'Z': 92, 'N': 144, 'alpha': 0.4, 'params': [0.0, -0.3, 0.0, 0.0]}, # Oblate
+            3: {'Z': 92, 'N': 144, 'alpha': 0.4, 'params': [0.2, 0.3, 0.1, 0.0]}   # Triaxial
         }
         
         config = configs[config_num]
