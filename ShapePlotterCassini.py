@@ -447,9 +447,9 @@ class CassiniShapePlotter:
             f"Volume fixing factor: {volume_fixing_factor:.4f}\n"
             f"Radius scaling factor: {radius_scaling_factor:.4f}\n"
             f"c_male: {c_male:.4f}\n"
-            f"Shape volume (after scaling): {volume_post_scale:.2f} fm³\n"
-            f"Volume difference: {abs(sphere_volume - volume_post_scale):.2f} fm³\n"
-            f"Z_bar center of mass: {z_cm_bar:.2f} fm\n"
+            f"Shape volume (after scaling): {volume_post_scale:.4f} fm³\n"
+            f"Volume difference: {abs(sphere_volume - volume_post_scale):.4f} fm³\n"
+            f"Z_bar center of mass: {z_cm_bar:.4f} fm\n"
             f"Z center of mass: {z_cm:.2f} fm"
         )
 
