@@ -296,7 +296,7 @@ class CassiniShapePlotter:
         self.save_button = Button(ax=ax_save, label='Save Plot')
 
         # Create configuration buttons on the left
-        config_labels = ['Spherical', 'Prolate', 'Oblate', 'Triaxial']
+        config_labels = ['Ground State', 'First Saddle Point', 'Secondary Minimum', 'Second Saddle Point']
         for i, label in enumerate(config_labels):
             ax_config = plt.axes((0.02, 0.6 - i*0.1, 0.1, 0.04))
             btn = Button(ax=ax_config, label=label)
@@ -306,10 +306,10 @@ class CassiniShapePlotter:
         """Apply a predefined configuration."""
         # These are placeholder values - you can set your own configurations
         configs = {
-            0: {'Z': 92, 'N': 144, 'alpha': 0.0, 'params': [0.0, 0.0, 0.0, 0.0]},  # Spherical
-            1: {'Z': 92, 'N': 144, 'alpha': 0.4, 'params': [0.0, 0.3, 0.0, 0.0]},  # Prolate
-            2: {'Z': 92, 'N': 144, 'alpha': 0.4, 'params': [0.0, -0.3, 0.0, 0.0]}, # Oblate
-            3: {'Z': 92, 'N': 144, 'alpha': 0.4, 'params': [0.2, 0.3, 0.1, 0.0]}   # Triaxial
+            0: {'Z': 92, 'N': 144, 'alpha': 0.250, 'params': [0.0, 0.0, 0.0, 0.075]},  # Ground state
+            1: {'Z': 92, 'N': 144, 'alpha': 0.350, 'params': [0.0, 0.0, 0.0, -0.075]},  # First saddle point
+            2: {'Z': 92, 'N': 144, 'alpha': 0.525, 'params': [0.0, 0.0, 0.0, 0.025]},  # Secondary minimum
+            3: {'Z': 92, 'N': 144, 'alpha': 0.650, 'params': [0.2, 0.0, 0.025, 0.050]}  # Second saddle point
         }
         
         config = configs[config_num]
@@ -443,6 +443,7 @@ class CassiniShapePlotter:
             f"c_male: {c_male:.4f}\n"
             f"Shape volume (after scaling): {volume_post_scale:.2f} fm³\n"
             f"Volume difference: {abs(sphere_volume - volume_post_scale):.2f} fm³\n"
+            f"Z_bar center of mass: {z_cm_bar:.2f} fm\n"
             f"Z center of mass: {z_cm:.2f} fm"
         )
 
