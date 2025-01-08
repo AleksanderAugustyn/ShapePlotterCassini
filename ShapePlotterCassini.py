@@ -173,6 +173,7 @@ class CassiniShapePlotter:
         self.buttons = []  # Will store alpha parameter +/- buttons
         self.reset_button = None
         self.save_button = None
+        self.config_buttons = []  # Store configuration buttons
 
         # Initialize nuclear parameters
         self.nuclear_params = CassiniParameters(
@@ -294,6 +295,30 @@ class CassiniShapePlotter:
         ax_save = plt.axes((0.8, 0.2, 0.1, 0.04))
         self.save_button = Button(ax=ax_save, label='Save Plot')
 
+        # Create configuration buttons on the left
+        config_labels = ['Config 1', 'Config 2', 'Config 3', 'Config 4']
+        for i, label in enumerate(config_labels):
+            ax_config = plt.axes((0.02, 0.6 - i*0.1, 0.1, 0.04))
+            btn = Button(ax=ax_config, label=label)
+            self.config_buttons.append(btn)
+
+    def apply_configuration(self, config_num):
+        """Apply a predefined configuration."""
+        # These are placeholder values - you can set your own configurations
+        configs = {
+            0: {'Z': 92, 'N': 144, 'alpha': 0.0, 'params': [0.0, 0.0, 0.0, 0.0]},
+            1: {'Z': 92, 'N': 144, 'alpha': 0.0, 'params': [0.0, 0.0, 0.0, 0.0]},
+            2: {'Z': 92, 'N': 144, 'alpha': 0.0, 'params': [0.0, 0.0, 0.0, 0.0]},
+            3: {'Z': 92, 'N': 144, 'alpha': 0.0, 'params': [0.0, 0.0, 0.0, 0.0]}
+        }
+        
+        config = configs[config_num]
+        self.slider_z.set_val(config['Z'])
+        self.slider_n.set_val(config['N'])
+        self.slider_alpha.set_val(config['alpha'])
+        for slider, value in zip(self.sliders, config['params']):
+            slider.set_val(value)
+
     def setup_event_handlers(self):
         """Set up all event handlers for controls."""
         # Connect slider update functions
@@ -321,6 +346,10 @@ class CassiniShapePlotter:
         # Connect action buttons
         self.reset_button.on_clicked(self.reset_values)
         self.save_button.on_clicked(self.save_plot)
+
+        # Connect configuration buttons
+        for i, btn in enumerate(self.config_buttons):
+            btn.on_clicked(lambda event, num=i: self.apply_configuration(num))
 
     @staticmethod
     def create_button_handler(slider_obj: Slider, increment: int):
