@@ -115,7 +115,7 @@ class CassiniShapeCalculator:
 
         return z_cm
 
-    def calculate_volume(self, n_points: int = 1000) -> float:
+    def calculate_volume(self, n_points: int = 2000) -> float:
         """Calculate the volume of the nuclear shape using numerical integration."""
         x = np.linspace(-1, 1, n_points)
         rho, z = self.calculate_coordinates(x)
@@ -360,7 +360,9 @@ class CassiniShapePlotter:
         rho_bar, z_bar = calculator.calculate_coordinates(self.x_points)
 
         # Calculate volume fixing factor
-        volume_fixing_factor = calculator.calculate_sphere_volume() / calculator.calculate_volume()
+        sphere_volume = calculator.calculate_sphere_volume()
+        volume_pre_scale = calculator.calculate_volume()
+        volume_fixing_factor = sphere_volume / volume_pre_scale
 
         # print(f"Sphere volume: {calculator.calculate_sphere_volume()}")
         # print(f"Volume: {calculator.calculate_volume()}")
@@ -370,15 +372,15 @@ class CassiniShapePlotter:
         z_cm_bar = calculator.calculate_zcm()
 
         # Transform rho_bar and z_bar to rho and z
-        rho = rho_bar / volume_fixing_factor  # Scale the shape
-        z = (z_bar - z_cm_bar) / volume_fixing_factor  # Center the shape
+        rho = rho_bar / (volume_fixing_factor ** (1 / 3))  # Scale the shape
+        z = (z_bar - z_cm_bar) / (volume_fixing_factor ** (1 / 3))  # Center the shape
 
         # Recalculate z_cm for the new shape, should be close to 0
         z_cm = calculator.calculate_zcm()
         # print(f"Center of mass: {z_cm}")
 
         # Recalculate volume, should be close to sphere volume
-        volume = calculator.calculate_volume()
+        volume_post_scale = calculator.calculate_volume()
         # print(f"Volume: {volume}")
         # print(f"Difference: {abs(volume - calculator.calculate_sphere_volume())}")
 
