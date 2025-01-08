@@ -187,9 +187,9 @@ class CassiniShapePlotter:
     def setup_controls(self):
         """Set up all UI controls."""
         # Create proton (Z) controls
-        ax_z = plt.axes((0.25, 0.00, 0.5, 0.02))
-        ax_z_decrease = plt.axes((0.16, 0.00, 0.04, 0.02))
-        ax_z_increase = plt.axes((0.80, 0.00, 0.04, 0.02))
+        ax_z = plt.axes((0.25, 0.02, 0.5, 0.02))
+        ax_z_decrease = plt.axes((0.16, 0.02, 0.04, 0.02))
+        ax_z_increase = plt.axes((0.80, 0.02, 0.04, 0.02))
 
         self.slider_z = Slider(ax=ax_z, label='Z', valmin=82, valmax=120,
                                valinit=self.initial_z, valstep=1)
@@ -197,9 +197,9 @@ class CassiniShapePlotter:
         self.btn_z_increase = Button(ax_z_increase, '+')
 
         # Create neutron (N) controls
-        ax_n = plt.axes((0.25, 0.02, 0.5, 0.02))
-        ax_n_decrease = plt.axes((0.16, 0.02, 0.04, 0.02))
-        ax_n_increase = plt.axes((0.80, 0.02, 0.04, 0.02))
+        ax_n = plt.axes((0.25, 0.04, 0.5, 0.02))
+        ax_n_decrease = plt.axes((0.16, 0.04, 0.04, 0.02))
+        ax_n_increase = plt.axes((0.80, 0.04, 0.04, 0.02))
 
         self.slider_n = Slider(ax=ax_n, label='N', valmin=100, valmax=180,
                                valinit=self.initial_n, valstep=1)
@@ -207,7 +207,7 @@ class CassiniShapePlotter:
         self.btn_n_increase = Button(ax_n_increase, '+')
 
         # Create slider for main alpha parameter
-        ax_alpha = plt.axes((0.25, 0.04, 0.5, 0.02))
+        ax_alpha = plt.axes((0.25, 0.06, 0.5, 0.02))
         self.slider_alpha = Slider(ax=ax_alpha, label='α',
                                    valmin=0.0, valmax=1.05,
                                    valinit=self.initial_alpha, valstep=0.025)
@@ -221,7 +221,7 @@ class CassiniShapePlotter:
         ]
 
         for i, (label, min_val, max_val) in enumerate(param_ranges):
-            ax = plt.axes((0.25, 0.06 + i * 0.02, 0.5, 0.02))
+            ax = plt.axes((0.25, 0.08 + i * 0.02, 0.5, 0.02))
             slider = Slider(ax=ax, label=label,
                             valmin=min_val, valmax=max_val,
                             valinit=self.initial_alphas[i], valstep=0.025)
