@@ -132,8 +132,8 @@ class CassiniShapeCalculator:
 
     def calculate_sphere_volume(self) -> float:
         """Calculate the volume of a sphere with the same number of nucleons."""
-        R_0 = self.params.r0 * (self.params.nucleons ** (1/3))
-        return (4/3) * np.pi * R_0**3
+        R_0 = self.params.r0 * (self.params.nucleons ** (1 / 3))
+        return (4 / 3) * np.pi * R_0 ** 3
 
 
 class CassiniShapePlotter:
@@ -210,11 +210,11 @@ class CassiniShapePlotter:
         z = (z_bar - z_cm_bar) / volume_fixing_factor  # Center the shape
 
         # Create reference sphere
-        R_0 = self.nuclear_params.r0 * (self.nuclear_params.nucleons ** (1/3))
-        theta = np.linspace(0, 2*np.pi, 200)
+        R_0 = self.nuclear_params.r0 * (self.nuclear_params.nucleons ** (1 / 3))
+        theta = np.linspace(0, 2 * np.pi, 200)
         sphere_x = R_0 * np.cos(theta)
         sphere_y = R_0 * np.sin(theta)
-        
+
         self.line, = self.ax_plot.plot(z, rho)
         self.line_mirror, = self.ax_plot.plot(z, -rho)
         self.sphere_line, = self.ax_plot.plot(sphere_x, sphere_y, '--', color='gray', alpha=0.5, label='R₀')
@@ -268,7 +268,7 @@ class CassiniShapePlotter:
                             valmin=min_val, valmax=max_val,
                             valinit=self.initial_alphas[i], valstep=0.025)
             self.sliders.append(slider)
-            
+
             # Create decrease/increase buttons
             ax_decrease = plt.axes((0.16, first_slider_y + 0.06 + i * 0.02, 0.04, 0.02))
             ax_increase = plt.axes((0.80, first_slider_y + 0.06 + i * 0.02, 0.04, 0.02))
@@ -309,8 +309,8 @@ class CassiniShapePlotter:
 
         # Connect alpha parameter button handlers
         for i, slider in enumerate(self.sliders):
-            self.buttons[i*2].on_clicked(self.create_button_handler(slider, -1))     # Decrease button
-            self.buttons[i*2+1].on_clicked(self.create_button_handler(slider, 1))    # Increase button
+            self.buttons[i * 2].on_clicked(self.create_button_handler(slider, -1))  # Decrease button
+            self.buttons[i * 2 + 1].on_clicked(self.create_button_handler(slider, 1))  # Increase button
 
         # Connect action buttons
         self.reset_button.on_clicked(self.reset_values)
@@ -389,8 +389,8 @@ class CassiniShapePlotter:
         self.line_mirror.set_data(z, -rho)
 
         # Update reference sphere
-        R_0 = current_params.r0 * (current_params.nucleons ** (1/3))
-        theta = np.linspace(0, 2*np.pi, 200)
+        R_0 = current_params.r0 * (current_params.nucleons ** (1 / 3))
+        theta = np.linspace(0, 2 * np.pi, 200)
         sphere_x = R_0 * np.cos(theta)
         sphere_y = R_0 * np.sin(theta)
         self.sphere_line.set_data(sphere_x, sphere_y)
@@ -402,21 +402,21 @@ class CassiniShapePlotter:
 
         # Add volume and center of mass information
         info_text = (
-            f"Sphere volume: {calculator.calculate_sphere_volume():.2f} fm³\n"
-            f"Shape volume (before scaling): {calculator.calculate_volume():.2f} fm³\n"
+            f"Sphere volume: {sphere_volume:.2f} fm³\n"
+            f"Shape volume (before scaling): {volume_pre_scale:.2f} fm³\n"
             f"Volume fixing factor: {volume_fixing_factor:.4f}\n"
-            f"Shape volume (after scaling): {calculator.calculate_volume() / volume_fixing_factor:.2f} fm³\n"
-            f"Volume difference: {abs(calculator.calculate_sphere_volume() - calculator.calculate_volume() / volume_fixing_factor):.2f} fm³\n"
+            f"Shape volume (after scaling): {volume_post_scale:.2f} fm³\n"
+            f"Volume difference: {abs(sphere_volume - volume_post_scale):.2f} fm³\n"
             f"Z center of mass: {z_cm:.4f} fm"
         )
-        
+
         # Remove old text if it exists
         for artist in self.ax_plot.texts:
             artist.remove()
-            
+
         # Add new text
         self.ax_plot.text(1.1 * max_val, 0.5 * max_val, info_text,
-                         fontsize=10, verticalalignment='center')
+                          fontsize=10, verticalalignment='center')
 
         # Update title with current nuclear information
         self.ax_plot.set_title(f'Nuclear Shape (Z={current_params.protons}, N={current_params.neutrons}, A={current_params.nucleons})',
