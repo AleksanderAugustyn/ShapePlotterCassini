@@ -71,8 +71,6 @@ class CassiniShapeCalculator:
                                   double_factorial(2 * n - 1) /
                                   (2 ** n * math.factorial(n)))
 
-        print(f"sum_factorial: {sum_factorial}")
-
         epsilon = ((alpha - 1) / 4 * ((1 + sum_all) ** 2 + (1 + sum_alternating) ** 2) +
                    (alpha + 1) / 2 * (1 + sum_factorial) ** 2)
 
@@ -135,6 +133,7 @@ class CassiniShapeCalculator:
     def calculate_sphere_volume(self) -> float:
         """Calculate the volume of a sphere with the same number of nucleons."""
         R_0 = self.params.r0 * (self.params.nucleons ** (1/3))
+        print((4 / 3) * np.pi * R_0 ** 3)
         return (4/3) * np.pi * R_0**3
 
 
@@ -199,9 +198,17 @@ class CassiniShapePlotter:
 
         # Initialize the shape plot
         calculator = CassiniShapeCalculator(self.nuclear_params)
-        rho, z = calculator.calculate_coordinates(self.x_points)
-        z_cm = calculator.calculate_zcm()
-        z = (z - z_cm)  # Center the shape
+        rho_bar, z_bar = calculator.calculate_coordinates(self.x_points)
+
+        # Calculate volume fixing factor
+        volume_fixing_factor = calculator.calculate_sphere_volume() / calculator.calculate_volume()
+
+        # Calculate center of mass
+        z_cm_bar = calculator.calculate_zcm()
+
+        # Transform rho_bar and z_bar to rho and z
+        rho = rho_bar / volume_fixing_factor  # Scale the shape
+        z = (z_bar - z_cm_bar) / volume_fixing_factor  # Center the shape
 
         # Create reference sphere
         R_0 = self.nuclear_params.r0 * (self.nuclear_params.nucleons ** (1/3))
