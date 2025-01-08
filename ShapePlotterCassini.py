@@ -35,7 +35,7 @@ class CassiniParameters:
             raise TypeError("alpha_params must be a list")
 
         if len(self.alpha_params) != 5:  # Updated for 5 parameters
-            original_length = len(self.alpha_params)
+            _original_length = len(self.alpha_params)
             if len(self.alpha_params) < 5:
                 self.alpha_params.extend([0.0] * (5 - len(self.alpha_params)))
             else:
