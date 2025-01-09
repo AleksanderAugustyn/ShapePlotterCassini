@@ -165,6 +165,8 @@ class CassiniShapePlotter:
         self.ax_plot = None
         self.line = None
         self.line_mirror = None
+        self.line_unscaled = None
+        self.line_unscaled_mirror = None
         self.sphere_line = None
         self.slider_z = None
         self.slider_n = None
@@ -228,9 +230,12 @@ class CassiniShapePlotter:
         sphere_x = R_0 * np.cos(theta)
         sphere_y = R_0 * np.sin(theta)
 
-        self.line, = self.ax_plot.plot(z, rho)
-        self.line_mirror, = self.ax_plot.plot(z, -rho)
+        self.line, = self.ax_plot.plot(z, rho, 'b-', label='Scaled')
+        self.line_mirror, = self.ax_plot.plot(z, -rho, 'b-')
+        self.line_unscaled, = self.ax_plot.plot(z_bar, rho_bar, 'r--', label='Unscaled', alpha=0.5)
+        self.line_unscaled_mirror, = self.ax_plot.plot(z_bar, -rho_bar, 'r--', alpha=0.5)
         self.sphere_line, = self.ax_plot.plot(sphere_x, sphere_y, '--', color='gray', alpha=0.5, label='R₀')
+        self.ax_plot.legend()
 
     def setup_controls(self):
         """Set up all UI controls."""
@@ -424,9 +429,11 @@ class CassiniShapePlotter:
         # Recalculate center of mass
         z_cm = calculator.calculate_zcm(rho, z)
 
-        # Update plot
+        # Update plot for both scaled and unscaled shapes
         self.line.set_data(z, rho)
         self.line_mirror.set_data(z, -rho)
+        self.line_unscaled.set_data(z_bar, rho_bar)
+        self.line_unscaled_mirror.set_data(z_bar, -rho_bar)
 
         # Update reference sphere
         R_0 = current_params.r0 * (current_params.nucleons ** (1 / 3))
