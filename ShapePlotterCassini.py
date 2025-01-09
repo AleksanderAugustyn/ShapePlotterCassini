@@ -168,6 +168,8 @@ class CassiniShapePlotter:
         self.line_unscaled = None
         self.line_unscaled_mirror = None
         self.sphere_line = None
+        self.point_zcm = None
+        self.point_zcm_bar = None
         self.slider_z = None
         self.slider_n = None
         self.btn_z_increase = None
@@ -235,6 +237,8 @@ class CassiniShapePlotter:
         self.line_unscaled, = self.ax_plot.plot(z_bar, rho_bar, 'r--', label='Unscaled', alpha=0.5)
         self.line_unscaled_mirror, = self.ax_plot.plot(z_bar, -rho_bar, 'r--', alpha=0.5)
         self.sphere_line, = self.ax_plot.plot(sphere_x, sphere_y, '--', color='gray', alpha=0.5, label='R₀')
+        self.point_zcm, = self.ax_plot.plot(z_cm, 0, 'bo', label='z_cm', markersize=8)
+        self.point_zcm_bar, = self.ax_plot.plot(z_cm_bar, 0, 'ro', label='z_cm_bar', markersize=8)
         self.ax_plot.legend()
 
     def setup_controls(self):
@@ -434,6 +438,8 @@ class CassiniShapePlotter:
         self.line_mirror.set_data(z, -rho)
         self.line_unscaled.set_data(z_bar, rho_bar)
         self.line_unscaled_mirror.set_data(z_bar, -rho_bar)
+        self.point_zcm.set_data([z_cm], [0])
+        self.point_zcm_bar.set_data([z_cm_bar], [0])
 
         # Update reference sphere
         R_0 = current_params.r0 * (current_params.nucleons ** (1 / 3))
