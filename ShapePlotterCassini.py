@@ -226,6 +226,10 @@ class CassiniShapePlotter:
         rho = rho_bar / volume_fixing_factor  # Scale the shape
         z = (z_bar - z_cm_bar) / volume_fixing_factor  # Center the shape
 
+        # Calculate center of mass for both shapes
+        z_cm = calculator.calculate_zcm(rho, z)
+        z_cm_bar = calculator.calculate_zcm(rho_bar, z_bar)
+
         # Create reference sphere
         R_0 = self.nuclear_params.r0 * (self.nuclear_params.nucleons ** (1 / 3))
         theta = np.linspace(0, 2 * np.pi, 200)
